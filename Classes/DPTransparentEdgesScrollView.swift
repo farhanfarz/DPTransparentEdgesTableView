@@ -19,18 +19,24 @@ class DPTransparentEdgesScrollView: UIScrollView {
     // length = viewHeight * gradientFactor
     var gradientLengthFactor = 0.1
     
-    init(frame: CGRect) {
+    override init(frame: CGRect) {
         super.init(frame: frame)
-        addObserver(self, forKeyPath: "contentOffset", options: nil, context: nil)
+        addObserver(self, forKeyPath: "contentOffset", options: .init(rawValue: 0), context: nil)
     }
     
-    init(coder aDecoder: NSCoder!)
-    {
+    required init?(coder aDecoder: NSCoder) {
+        
         super.init(coder: aDecoder)
-        addObserver(self, forKeyPath: "contentOffset", options: nil, context: nil)
+        
+        addObserver(self, forKeyPath: "contentOffset", options: .init(rawValue: 0), context: nil)
     }
     
-    override func observeValueForKeyPath(keyPath: String!, ofObject object: AnyObject!, change: NSDictionary!, context: CMutableVoidPointer) {
+    //gurpreet : addd deinit block to remove observer for crash 851 but it is not reproducable
+    deinit{
+        self.removeObserver(self, forKeyPath: "contentOffset")
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         let offsetY = contentOffset.y;
         if offsetY > 0 {
             if !showTopMask {
@@ -57,13 +63,13 @@ class DPTransparentEdgesScrollView: UIScrollView {
         let maskLayer = CAGradientLayer()
         
         // This is the anchor point for our gradient, in our case top left. setting it in the middle (.5, .5) will produce a radial gradient. our startPoint and endPoints are based off the anchorPoint
-        maskLayer.anchorPoint = CGPointZero
+        maskLayer.anchorPoint = CGPoint.zero
         
         // The line between these two points is the line our gradient uses as a guide
         // Starts in bottom left
-        maskLayer.startPoint = CGPointMake(0, 0)
+        maskLayer.startPoint = CGPoint(x : 0, y : 0)
         // Ends in top left
-        maskLayer.endPoint = CGPointMake(0, 1)
+        maskLayer.endPoint = CGPoint(x : 0, y : 1)
         
         // Setting our colors - since this is a mask the color itself is irrelevant - all that matters is the alpha. A clear color will completely hide the layer we're masking, an alpha of 1.0 will completely show the masked view
         let outerColor = UIColor(white: 1.0, alpha: 0.0)
@@ -71,23 +77,24 @@ class DPTransparentEdgesScrollView: UIScrollView {
         
         // Setting colors for maskLayer for each scrollView state
         if !showTopMask && !showBottomMask {
-            maskLayer.colors = [innerColor.CGColor, innerColor.CGColor, innerColor.CGColor, innerColor.CGColor]
+            maskLayer.colors = [innerColor.cgColor, innerColor.cgColor, innerColor.cgColor, innerColor.cgColor]
         } else if showTopMask && !showBottomMask {
-            maskLayer.colors = [outerColor.CGColor, innerColor.CGColor, innerColor.CGColor, innerColor.CGColor]
+            maskLayer.colors = [outerColor.cgColor, innerColor.cgColor, innerColor.cgColor, innerColor.cgColor]
         } else if !showTopMask && showBottomMask {
-            maskLayer.colors = [innerColor.CGColor, innerColor.CGColor, innerColor.CGColor, outerColor.CGColor]
+            maskLayer.colors = [innerColor.cgColor, innerColor.cgColor, innerColor.cgColor, outerColor.cgColor]
         } else if showTopMask && showBottomMask {
-            maskLayer.colors = [outerColor.CGColor, innerColor.CGColor, innerColor.CGColor, outerColor.CGColor]
+            maskLayer.colors = [outerColor.cgColor, innerColor.cgColor, innerColor.cgColor, outerColor.cgColor]
         }
         
         // Defining the location of each gradient stop. Top gradient runs from 0 to gradientLengthFactor, bottom gradient from 1 - gradientLengthFactor to 1.0
         if bottomMaskDisabled {
-            maskLayer.locations = [0, gradientLengthFactor]
+            
+            maskLayer.locations = [0, NSNumber(value: gradientLengthFactor)]
         } else if topMaskDisabled {
-            maskLayer.locations = [0, 0, 1 - gradientLengthFactor, 1]
+            maskLayer.locations = [0, 0, NSNumber(value:1 - gradientLengthFactor), 1]
         }
         else {
-            maskLayer.locations = [0, gradientLengthFactor, 1 - gradientLengthFactor, 1]
+            maskLayer.locations = [0, NSNumber(value:gradientLengthFactor), NSNumber(value:1 - gradientLengthFactor), 1]
         }
         
         maskLayer.frame = bounds
@@ -99,3 +106,4 @@ class DPTransparentEdgesScrollView: UIScrollView {
         super.layoutSubviews()
     }
 }
+
