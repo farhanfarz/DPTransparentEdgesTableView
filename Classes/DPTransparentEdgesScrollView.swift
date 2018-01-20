@@ -72,8 +72,8 @@ class DPTransparentEdgesScrollView: UIScrollView {
         maskLayer.endPoint = CGPoint(x : 0, y : 1)
         
         // Setting our colors - since this is a mask the color itself is irrelevant - all that matters is the alpha. A clear color will completely hide the layer we're masking, an alpha of 1.0 will completely show the masked view
-        let outerColor = UIColor(white: 1.0, alpha: 0.0)
-        let innerColor = UIColor(white: 1.0, alpha: 1.0)
+        let outerColor = UIColor.clear.withAlphaComponent(0.0)
+        let innerColor = UIColor.black.withAlphaComponent(1.0)
         
         // Setting colors for maskLayer for each scrollView state
         if !showTopMask && !showBottomMask {
